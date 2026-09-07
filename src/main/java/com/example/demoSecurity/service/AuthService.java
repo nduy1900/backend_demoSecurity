@@ -7,13 +7,19 @@ import com.example.demoSecurity.entity.User;
 import com.example.demoSecurity.mapper.UserMapper;
 import com.example.demoSecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class AuthService {
     private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
@@ -29,22 +35,21 @@ public class UserService {
         newUser.setPassword(passwordEncrypted);
 
         userRepository.save(newUser);
-
         return userMapper.toResponse(newUser);
     }
 
     // Đăng nhập
     public UserResponseDTO login(UserLoginDTO loginDTO) {
-        // kiểm tra tên đăng nhập có tồn tại không
-        User user = userRepository.findByUsername(loginDTO.getUsername());
+        // kiểm tra username + password ~ tìm user, map mật khẩu
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginDTO.getUsername(),
+                        loginDTO.getPassword()
+                )
+        );
+        String userName = authentication.getName();
+        User user = userRepository.findByUsername(userName).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return userMapper.toResponse(user);
 
-        // Sau đó mới kiểm tra password nhập vào có trùng với pass đã hash không
-        boolean passwordMatches = passwordEncoder.matches(loginDTO.getPassword(), user.getPassword());
-
-        if (passwordMatches) {
-            return userMapper.toResponse(user);
-        } else {
-            return null;
-        }
     }
 }

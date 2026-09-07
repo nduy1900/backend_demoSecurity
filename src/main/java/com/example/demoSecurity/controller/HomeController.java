@@ -41,7 +41,7 @@ public class HomeController {
     }
 
 
-    @PostMapping
+    @PostMapping("/products")
     public ResponseEntity<ApiResponse<String>> createProducts(@RequestBody String productName) {
         return ResponseEntity.status(201).body(new ApiResponse<>(
                 201,
@@ -50,7 +50,7 @@ public class HomeController {
         ));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/products/{id}")
     public ResponseEntity<ApiResponse<String>> updateProduct(@PathVariable int id, @RequestBody String productName) {
         return ResponseEntity.ok(new ApiResponse<>(
                 200,
@@ -59,7 +59,7 @@ public class HomeController {
         ));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/products/{id}")
     public ResponseEntity<ApiResponse<String>> deleteProduct(@PathVariable int id) {
         return ResponseEntity.ok(new ApiResponse<>(
                 200,
