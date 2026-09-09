@@ -7,13 +7,12 @@ import com.example.demoSecurity.entity.User;
 import com.example.demoSecurity.mapper.UserMapper;
 import com.example.demoSecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +21,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final JwtService jwtService;
 
     // Đăng ký
     public UserResponseDTO signIn(UserRequestDTO requestDTO) {
@@ -39,7 +39,7 @@ public class AuthService {
     }
 
     // Đăng nhập
-    public UserResponseDTO login(UserLoginDTO loginDTO) {
+    public String login(UserLoginDTO loginDTO) {
         // kiểm tra username + password ~ tìm user, map mật khẩu
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -47,9 +47,10 @@ public class AuthService {
                         loginDTO.getPassword()
                 )
         );
-        String userName = authentication.getName();
-        User user = userRepository.findByUsername(userName).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return userMapper.toResponse(user);
+        // lấy thông tin người dùng
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        return jwtService.generateToken(userDetails);
 
     }
 }

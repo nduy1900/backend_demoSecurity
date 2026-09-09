@@ -32,7 +32,7 @@ public class AuthController {
 
     // Đăng nhập
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponseDTO>> login(@Valid @RequestBody UserLoginDTO loginDTO) {
+    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody UserLoginDTO loginDTO) {
         return ResponseEntity.ok(new ApiResponse<>(
                 200,
                 "Đăng nhập thành công",
