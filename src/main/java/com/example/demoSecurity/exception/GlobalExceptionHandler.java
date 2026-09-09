@@ -42,4 +42,27 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+
+    // Exception ResourceNotFound
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                404,
+                "Không tìm thấy dữ liệu",
+                null
+        );
+        return ResponseEntity.status(404).body(apiResponse);
+    }
+
+    //Exception chung
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+        ApiResponse<Void> apiResponse = new ApiResponse<>(
+                500,
+                "Internal Server Error",
+                null
+        );
+        return ResponseEntity.status(500).body(apiResponse);
+    }
+
 }
