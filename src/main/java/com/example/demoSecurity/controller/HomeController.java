@@ -13,7 +13,7 @@ public class HomeController {
         return "Đây là endpoint public";
     }
 
-    @GetMapping
+    @GetMapping("/products")
     public ResponseEntity<ApiResponse<String>> getProducts() {
         return ResponseEntity.ok(new ApiResponse<>(
                 200,

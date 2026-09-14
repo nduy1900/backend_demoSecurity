@@ -47,7 +47,7 @@ public class AuthService {
                         loginDTO.getPassword()
                 )
         );
-        // lấy thông tin người dùng
+        // lấy thông tin người dùng đã xác thực
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
         return jwtService.generateToken(userDetails);

@@ -3,6 +3,7 @@ package com.example.demoSecurity.exception;
 import com.example.demoSecurity.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -54,15 +55,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(apiResponse);
     }
 
-    //Exception chung
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+    // Exception bắt lỗi login sai user
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         ApiResponse<Void> apiResponse = new ApiResponse<>(
-                500,
-                "Internal Server Error",
+                404,
+                ex.getMessage(),
                 null
         );
-        return ResponseEntity.status(500).body(apiResponse);
+        return ResponseEntity.status(404).body(apiResponse);
     }
+
+    //Exception chung
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+//        ApiResponse<Void> apiResponse = new ApiResponse<>(
+//                500,
+//                "Internal Server Error",
+//                null
+//        );
+//        return ResponseEntity.status(500).body(apiResponse);
+//    }
 
 }
