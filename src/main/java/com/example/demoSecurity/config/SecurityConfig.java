@@ -3,8 +3,8 @@ package com.example.demoSecurity.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,14 +12,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 //import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -43,48 +41,47 @@ public class SecurityConfig {
                 // 3. AUTHORIZATION
                 // =============================================
                 .authorizeHttpRequests(auth -> auth
-                        // Không cần đăng nhập
-                        .requestMatchers("/api/public/products").permitAll()
+                                // Không cần đăng nhập
+                                .requestMatchers("/api/public/products").permitAll()
 
-                        // auth api không cần đăng nhập
-                        .requestMatchers("/api/auth/**").permitAll()
+                                // auth api không cần đăng nhập
+                                .requestMatchers("/api/auth/**").permitAll()
 
-                        // GET /api/products
-                        .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("USER", "STAFF", "MANAGER", "ADMIN")
+                                // test API chưa phân quyền
+                                .requestMatchers("/api/admin/users").permitAll()
+                                .requestMatchers("/api/reports").permitAll()
 
-                        // POST /api/products
-                        .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("STAFF", "MANAGER", "ADMIN")
+                                // GET /api/products
+//                                .requestMatchers("/api/products").hasAnyRole("USER", "STAFF", "MANAGER", "ADMIN")
+//
+//                        // POST /api/products
+//                        .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("STAFF", "MANAGER", "ADMIN")
+//
+//                        // PUT /api/products/{id}
+//                        .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("STAFF", "MANAGER", "ADMIN")
+//
+//                        // DELETE /api/products/{id}
+//                        .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("MANAGER", "ADMIN")
+//
+//                        // GET /api/reports
+//                        .requestMatchers("/api/reports").hasAnyRole("MANAGER", "ADMIN")
+//
+//                        // GET /api/admin/users
+//                        .requestMatchers("/api/admin/users").hasRole("ADMIN")
 
-                        // PUT /api/products/{id}
-                        .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("STAFF", "MANAGER", "ADMIN")
-
-                        // DELETE /api/products/{id}
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("MANAGER", "ADMIN")
-
-                        // GET /api/reports
-                        .requestMatchers("/api/reports").hasAnyRole("MANAGER", "ADMIN")
-
-                        // GET /api/admin/users
-                        .requestMatchers("/api/admin/users").hasRole("ADMIN")
-
-                        .anyRequest().authenticated()
+                                .anyRequest().authenticated()
                 )
 
+                // =============================================
+                // 5. XÁC THỰC JWT BẰNG OAUTH2 RESOURCE SERVER
+                // =============================================
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+
 
                 // =============================================
-                // 5. TẮT BASIC AUTHENTICATION
+                // 6. TẮT BASIC AUTHENTICATION
                 // =============================================
-                .httpBasic(httpBasic -> httpBasic.disable())
-
-
-                // =============================================
-                // 6. JWT FILTER -   Thêm cơ chế xác thực JWT
-                // =============================================
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
+                .httpBasic(httpBasic -> httpBasic.disable());
 
         return http.build();
     }

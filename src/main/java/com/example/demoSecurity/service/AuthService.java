@@ -4,6 +4,7 @@ import com.example.demoSecurity.dto.request.UserLoginDTO;
 import com.example.demoSecurity.dto.request.UserRequestDTO;
 import com.example.demoSecurity.dto.response.UserResponseDTO;
 import com.example.demoSecurity.entity.User;
+import com.example.demoSecurity.exception.ResourceNotFoundException;
 import com.example.demoSecurity.mapper.UserMapper;
 import com.example.demoSecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,5 +53,18 @@ public class AuthService {
 
         return jwtService.generateToken(userDetails);
 
+    }
+
+    // Vô hiệu hoá tài khoản
+    public void disableUser(int id) {
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException(
+                        "Không tìm thấy tài khoản có id: " + id
+                )
+        );
+
+        // Vô hiệu hóa tài khoản
+        user.setEnabled(false);
+        userRepository.save(user);
     }
 }

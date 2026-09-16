@@ -8,10 +8,7 @@ import com.example.demoSecurity.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -38,5 +35,17 @@ public class AuthController {
                 "Đăng nhập thành công",
                 authService.login(loginDTO)
         ));
+    }
+
+    // Vô hiệu hoá tài khoản
+    @PutMapping("/disable/{id}")
+    public ResponseEntity<ApiResponse<Void>> disableUser(@PathVariable Integer id) {
+        authService.disableUser(id);
+        return ResponseEntity.ok(new ApiResponse<>(
+                        200,
+                        "Vô hiệu hóa tài khoản thành công",
+                        null
+                )
+        );
     }
 }

@@ -3,6 +3,7 @@ package com.example.demoSecurity.exception;
 import com.example.demoSecurity.util.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -64,6 +65,21 @@ public class GlobalExceptionHandler {
                 null
         );
         return ResponseEntity.status(404).body(apiResponse);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDisabledException(
+            DisabledException ex) {
+
+        ApiResponse<Void> response = new ApiResponse<>(
+                403,
+                "Tài khoản đã bị vô hiệu hóa",
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(response);
     }
 
     //Exception chung
