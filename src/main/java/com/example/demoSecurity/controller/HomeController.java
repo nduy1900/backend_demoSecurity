@@ -2,10 +2,13 @@ package com.example.demoSecurity.controller;
 
 import com.example.demoSecurity.util.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
+@EnableMethodSecurity
 public class HomeController {
 
     @GetMapping("/public/products")
@@ -31,6 +34,8 @@ public class HomeController {
         ));
     }
 
+    // Chỉ cho admin và manager
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @GetMapping("/reports")
     public ResponseEntity<ApiResponse<String>> getReports() {
         return ResponseEntity.ok(new ApiResponse<>(
