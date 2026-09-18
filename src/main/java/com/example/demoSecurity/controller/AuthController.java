@@ -1,7 +1,9 @@
 package com.example.demoSecurity.controller;
 
+import com.example.demoSecurity.dto.request.RefreshTokenRequestDTO;
 import com.example.demoSecurity.dto.request.UserLoginDTO;
 import com.example.demoSecurity.dto.request.UserRequestDTO;
+import com.example.demoSecurity.dto.response.LoginResponseDTO;
 import com.example.demoSecurity.dto.response.UserResponseDTO;
 import com.example.demoSecurity.service.AuthService;
 import com.example.demoSecurity.util.ApiResponse;
@@ -29,7 +31,7 @@ public class AuthController {
 
     // Đăng nhập
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody UserLoginDTO loginDTO) {
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(@Valid @RequestBody UserLoginDTO loginDTO) {
         return ResponseEntity.ok(new ApiResponse<>(
                 200,
                 "Đăng nhập thành công",
@@ -45,6 +47,16 @@ public class AuthController {
                         200,
                         "Vô hiệu hóa tài khoản thành công",
                         null
+                )
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> refresh(@Valid @RequestBody RefreshTokenRequestDTO refreshTokenRequest) {
+        return ResponseEntity.ok(new ApiResponse<>(
+                        200,
+                        "Tạo mới accessToken thành công",
+                        authService.refreshToken(refreshTokenRequest)
                 )
         );
     }

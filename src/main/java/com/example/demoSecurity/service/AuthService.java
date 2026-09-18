@@ -1,8 +1,11 @@
 package com.example.demoSecurity.service;
 
+import com.example.demoSecurity.dto.request.RefreshTokenRequestDTO;
 import com.example.demoSecurity.dto.request.UserLoginDTO;
 import com.example.demoSecurity.dto.request.UserRequestDTO;
+import com.example.demoSecurity.dto.response.LoginResponseDTO;
 import com.example.demoSecurity.dto.response.UserResponseDTO;
+import com.example.demoSecurity.entity.RefreshToken;
 import com.example.demoSecurity.entity.User;
 import com.example.demoSecurity.exception.ResourceNotFoundException;
 import com.example.demoSecurity.mapper.UserMapper;
@@ -23,6 +26,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     // Đăng ký
     public UserResponseDTO signIn(UserRequestDTO requestDTO) {
@@ -40,7 +45,7 @@ public class AuthService {
     }
 
     // Đăng nhập
-    public String login(UserLoginDTO loginDTO) {
+    public LoginResponseDTO login(UserLoginDTO loginDTO) {
         // kiểm tra username + password ~ tìm user, map mật khẩu
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -51,7 +56,17 @@ public class AuthService {
         // lấy thông tin người dùng đã xác thực
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        return jwtService.generateToken(userDetails);
+        // sinh token
+        String accessToken = jwtService.generateAccessToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+        // lưu refreshToken vào DB khi đăng nhập
+        refreshTokenService.save(refreshToken, userDetails.getUsername());
+        LoginResponseDTO responseDTO = new LoginResponseDTO();
+        responseDTO.setAccessToken(accessToken);
+        responseDTO.setRefreshToken(refreshToken);
+
+        return responseDTO;
 
     }
 
@@ -66,5 +81,31 @@ public class AuthService {
         // Vô hiệu hóa tài khoản
         user.setEnabled(false);
         userRepository.save(user);
+    }
+
+
+    // Phương thức dùng refreshToken tạo accessToken mới
+    public LoginResponseDTO refreshToken(RefreshTokenRequestDTO refreshToken) {
+        String token = refreshToken.getRefreshToken();
+
+        // tìm trong DB
+        RefreshToken refreshTokenInDB = refreshTokenService.findByToken(token);
+
+        // kiểm tra xem refreshToken còn hạn không
+        refreshTokenService.verifyToken(refreshTokenInDB);
+
+        // lấy username
+        String username = refreshTokenInDB.getUsername();
+
+        // lấy userDetails
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+
+        // tạo accessToken mới
+        String newAccessToken = jwtService.generateAccessToken(userDetails);
+
+        LoginResponseDTO responseDTO = new LoginResponseDTO();
+        responseDTO.setAccessToken(newAccessToken);
+        responseDTO.setRefreshToken(token);
+        return responseDTO;
     }
 }

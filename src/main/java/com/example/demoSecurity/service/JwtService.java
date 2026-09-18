@@ -21,6 +21,10 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    @Value("${jwt.expiration-refresh}")
+    private long expirationRefresh;
+
+
     // Sinh secretkey
     private SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(
@@ -28,8 +32,8 @@ public class JwtService {
         );
     }
 
-    // TẠO JWT TOKEN
-    public String generateToken(UserDetails userDetails) {
+    // TẠO JWT TOKEN (ACCESS TOKEN)
+    public String generateAccessToken(UserDetails userDetails) {
         return Jwts.builder()
 
                 // thông tin người dùng
@@ -41,10 +45,23 @@ public class JwtService {
                         "role", userDetails.getAuthorities().stream().findFirst()
                                 .map(GrantedAuthority::getAuthority).orElse("")
                 )
+                .claim("type", "access")
                 // ngày tạo
                 .issuedAt(new Date())
                 // ngày hết hạn
                 .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSecretKey())
+                .compact();
+    }
+
+    // TẠO JWT TOKEN (REFRESH TOKEN)
+    public String generateRefreshToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .claim("type", "refresh")
+                .issuedAt(new Date())
+                // ngày hết hạn
+                .expiration(new Date(System.currentTimeMillis() + expirationRefresh))
                 .signWith(getSecretKey())
                 .compact();
     }
