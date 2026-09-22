@@ -18,6 +18,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -44,7 +46,7 @@ public class AuthService {
         return userMapper.toResponse(newUser);
     }
 
-    // Đăng nhập
+    // Đăng nhập (Access + Refresh + Family)
     public LoginResponseDTO login(UserLoginDTO loginDTO) {
         // kiểm tra username + password ~ tìm user, map mật khẩu
         Authentication authentication = authenticationManager.authenticate(
@@ -60,8 +62,11 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
 
+        // tạo token family (family_id chỉ được lưu duy nhất 1 lần khi login)
+        String familyId = UUID.randomUUID().toString();
+
         // lưu refreshToken vào DB khi đăng nhập
-        refreshTokenService.save(refreshToken, userDetails.getUsername());
+        refreshTokenService.save(refreshToken, userDetails.getUsername(), familyId);
         LoginResponseDTO responseDTO = new LoginResponseDTO();
         responseDTO.setAccessToken(accessToken);
         responseDTO.setRefreshToken(refreshToken);
@@ -84,28 +89,48 @@ public class AuthService {
     }
 
 
-    // Phương thức dùng refreshToken tạo accessToken mới
+    // Phương thức dùng refreshToken tạo accessToken mới (Rotation + Reuse Detection + Token Family)
     public LoginResponseDTO refreshToken(RefreshTokenRequestDTO refreshToken) {
+        // 1. Lấy Refresh Token từ request
         String token = refreshToken.getRefreshToken();
 
-        // tìm trong DB
+        // 2. tìm trong DB
         RefreshToken refreshTokenInDB = refreshTokenService.findByToken(token);
 
-        // kiểm tra xem refreshToken còn hạn không
+        // 3.kiểm tra refresh token đã revoke chưa, kiểm tra Reuse
+        if (refreshTokenInDB.isRevoked()) {
+            String familyId = refreshTokenInDB.getFamilyId();
+
+            // Reuse detected → revoke toàn bộ Family
+            refreshTokenService.revokeFamily(familyId);
+
+            throw new RuntimeException("Refresh token reuse detected");
+        }
+        // 4.kiểm tra xem refreshToken còn hạn không
         refreshTokenService.verifyToken(refreshTokenInDB);
 
-        // lấy username
+        // 5.lấy username
         String username = refreshTokenInDB.getUsername();
 
-        // lấy userDetails
+        // 6.lấy userDetails
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
-        // tạo accessToken mới
+        // 7.tạo accessToken mới
         String newAccessToken = jwtService.generateAccessToken(userDetails);
 
+        // 8.tạo refreshToken mới và lưu trong DB
+        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+
+        // 9.vô hiệu hoá refresh token trong DB
+        refreshTokenService.revoke(refreshTokenInDB);
+
+        String family_id = refreshTokenInDB.getFamilyId();
+        refreshTokenService.save(newRefreshToken, userDetails.getUsername(), family_id);
+
+        // 10.Lưu Refresh Token mới
         LoginResponseDTO responseDTO = new LoginResponseDTO();
         responseDTO.setAccessToken(newAccessToken);
-        responseDTO.setRefreshToken(token);
+        responseDTO.setRefreshToken(newRefreshToken);
         return responseDTO;
     }
 }

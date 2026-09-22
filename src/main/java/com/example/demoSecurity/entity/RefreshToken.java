@@ -31,4 +31,8 @@ public class RefreshToken {
 
     @Column(name = "revoked", nullable = false)
     private boolean revoked;
+
+    // Family_id chỉ tạo 1 lần duy nhất khi login
+    @Column(name = "family_id")
+    private String familyId;
 }
