@@ -1,5 +1,6 @@
 package com.example.demoSecurity.controller;
 
+import com.example.demoSecurity.dto.request.ChangePasswordDTO;
 import com.example.demoSecurity.dto.request.RefreshTokenRequestDTO;
 import com.example.demoSecurity.dto.request.UserLoginDTO;
 import com.example.demoSecurity.dto.request.UserRequestDTO;
@@ -10,6 +11,7 @@ import com.example.demoSecurity.util.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -57,6 +59,42 @@ public class AuthController {
                         200,
                         "Tạo mới accessToken thành công",
                         authService.refreshToken(refreshTokenRequest)
+                )
+        );
+    }
+
+    // Đăng xuất
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequestDTO request) {
+        authService.logout(request);
+        return ResponseEntity.ok(new ApiResponse<>(
+                        200,
+                        "Logout thành công",
+                        null
+                )
+        );
+    }
+
+    // Đăng xuất toàn bộ dựa vào username
+    @PostMapping("/logout/all")
+    public ResponseEntity<ApiResponse<Void>> logoutAll(@Valid @RequestBody RefreshTokenRequestDTO request) {
+        authService.logoutAll(request);
+        return ResponseEntity.ok(new ApiResponse<>(
+                        200,
+                        "Logout tất cả user thành công",
+                        null
+                )
+        );
+    }
+
+    // Đổi mật khẩu dựa vào username
+    @PostMapping("/changePassword")
+    public ResponseEntity<ApiResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordDTO request, Authentication authentication) {
+        authService.changePassword(request, authentication);
+        return ResponseEntity.ok(new ApiResponse<>(
+                        200,
+                        "Đổi mật khẩu thành công",
+                        null
                 )
         );
     }

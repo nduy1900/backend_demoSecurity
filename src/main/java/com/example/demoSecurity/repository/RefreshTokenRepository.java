@@ -13,4 +13,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Inte
 
     List<RefreshToken> findByFamilyId(String familyId);
 
+    List<RefreshToken> findByUsername(String username);
 }

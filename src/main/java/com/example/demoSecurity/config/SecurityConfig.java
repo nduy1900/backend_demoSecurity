@@ -48,8 +48,10 @@ public class SecurityConfig {
                                 // auth api không cần đăng nhập
                                 .requestMatchers("/api/auth/**").permitAll()
 
+                                .requestMatchers("/api/auth/logout/all").permitAll()
+
                                 .requestMatchers("/api/auth/refresh").permitAll()
-                        
+
                                 // Nếu dùng .hasRole thì không cần thêm tiền tố "ROLE_"
                                 .requestMatchers("/api/admin/users").hasRole("ADMIN")
 

@@ -1,5 +1,6 @@
 package com.example.demoSecurity.service;
 
+import com.example.demoSecurity.dto.request.ChangePasswordDTO;
 import com.example.demoSecurity.dto.request.RefreshTokenRequestDTO;
 import com.example.demoSecurity.dto.request.UserLoginDTO;
 import com.example.demoSecurity.dto.request.UserRequestDTO;
@@ -12,6 +13,7 @@ import com.example.demoSecurity.mapper.UserMapper;
 import com.example.demoSecurity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -132,5 +134,60 @@ public class AuthService {
         responseDTO.setAccessToken(newAccessToken);
         responseDTO.setRefreshToken(newRefreshToken);
         return responseDTO;
+    }
+
+    //Đăng xuất
+    public void logout(RefreshTokenRequestDTO request) {
+        // lấy refresh token từ request
+        String token = request.getRefreshToken();
+
+        // tìm refresh token trong DB
+        RefreshToken refreshTokenInDB = refreshTokenService.findByToken(token);
+
+        // lấy family id
+        String family_id = refreshTokenInDB.getFamilyId();
+
+        // Reuse Detected -> revoke toàn bộ family
+        refreshTokenService.revokeFamily(family_id);
+    }
+
+    // Đăng xuất toàn bộ dựa vào username
+    public void logoutAll(RefreshTokenRequestDTO request) {
+        String token = request.getRefreshToken();
+
+        // tìm refresh token trong DB
+        RefreshToken refreshTokenInDB = refreshTokenService.findByToken(token);
+
+        // lấy username từ DB
+        String username = refreshTokenInDB.getUsername();
+        refreshTokenService.revokeUsername(username);
+    }
+
+    // Đổi mật khẩu dựa vào username (access Token)
+    public void changePassword(ChangePasswordDTO request, Authentication authentication) {
+
+        // Lấy username từ Access Token
+        String username = authentication.getName();
+
+        // Tìm user tương ứng
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new ResourceNotFoundException("Không tìm thấy tài khoản"
+                )
+        );
+
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+
+            throw new BadCredentialsException(
+                    "Mật khẩu cũ không chính xác"
+            );
+        }
+
+        // Mã hóa mật khẩu mới
+        String newPassword = passwordEncoder.encode(request.getNewPassword());
+
+        // Cập nhật
+        user.setPassword(newPassword);
+        userRepository.save(user);
     }
 }

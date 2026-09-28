@@ -56,4 +56,11 @@ public class RefreshTokenService {
         );
         refreshTokenRepository.saveAll(tokens);
     }
+
+    // REVOKE TOÀN BỘ TOKEN DỰA VÀO USERNAME
+    public void revokeUsername(String username) {
+        List<RefreshToken> tokens = refreshTokenRepository.findByUsername(username);
+        tokens.forEach(token -> token.setRevoked(true));
+        refreshTokenRepository.saveAll(tokens);
+    }
 }
